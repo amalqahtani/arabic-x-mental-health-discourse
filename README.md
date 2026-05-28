@@ -10,25 +10,15 @@ The pipeline classifies Arabic tweets from condition-specific X Communities (ADH
 
 ---
 
-## Repository
-
-```
-https://github.com/amalqahtani/arabic-x-mental-health-discourse
-```
-
----
-
 ## Repository Contents
 
 | File | Description |
 |---|---|
+| `requirements.txt` | Python dependencies |
 | `classification_pipeline.py` | LLM-assisted personal-disclosure classification pipeline |
 | `post_ids.csv` | Post IDs for all 9,582 preprocessed tweets |
 | `DATA.md` | Dataset description and re-hydration instructions |
-| `requirements.txt` | Python dependencies |
 | `LICENSE` | MIT License |
-| `.gitignore` | Excludes data files, credentials, and build artefacts |
-| `.env.example` | Template for API key environment variables |
 
 > **Note on data release:** Only post IDs are released, in accordance with the X Developer Agreement. Tweet content must be re-hydrated using the X API. User identifiers and text are not included.
 
@@ -39,8 +29,6 @@ https://github.com/amalqahtani/arabic-x-mental-health-discourse
 - Python >= 3.8
 - An [OpenAI API key](https://platform.openai.com/account/api-keys) with access to `gpt-4.1`
 - An [Alibaba DashScope API key](https://dashscope.aliyuncs.com/) with access to `qwen3-235b-a22b-instruct-2507`
-
-> **Note on model identifiers:** DashScope model names are subject to change. Verify `MODEL_QWEN` in `classification_pipeline.py` against the current [DashScope model list](https://dashscope.aliyuncs.com/) before running.
 
 ---
 
@@ -54,8 +42,6 @@ pip install -r requirements.txt
 
 ## API Key Setup
 
-**Never hardcode API keys in source files.** Export them as environment variables before running:
-
 ```bash
 export OPENAI_API_KEY="your-openai-key"
 export DASHSCOPE_API_KEY="your-dashscope-key"
@@ -67,9 +53,6 @@ On Windows:
 set OPENAI_API_KEY=your-openai-key
 set DASHSCOPE_API_KEY=your-dashscope-key
 ```
-
-A template is provided in `.env.example`.
-
 ---
 
 ## Input Data Format
@@ -132,8 +115,6 @@ python classification_pipeline.py --mode fresh --input tweets_preprocessed.csv -
 ## Ethics and Data Statement
 
 This pipeline was developed for academic research on Arabic mental-health discourse in condition-specific X Communities (BPD, Bipolar, ADHD). All user identifiers in released data are anonymised before analysis. The `likely_disclosure` label is an operational descriptor based on the presence of self-reported experiential language and does not constitute a clinical diagnosis. No clinical inferences should be drawn from the pipeline outputs.
-
-The classification prompt was developed on a Saudi-centric dataset. Dialectal adaptation is needed before applying the pipeline to Egyptian, Levantine, or North African Arabic.
 
 ---
 
