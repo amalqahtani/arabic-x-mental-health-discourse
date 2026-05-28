@@ -118,7 +118,7 @@ This pipeline was developed for academic research on Arabic mental-health discou
 
 ---
 
-## Citation
+## Citation [To Be Updated]
 
 If you use this pipeline or the associated corpus, please cite:
 
@@ -126,7 +126,6 @@ If you use this pipeline or the associated corpus, please cite:
 @inproceedings{alqahtani2026arabic,
   title     = {Understanding the Sociocultural Dimensions of Mental Health Discourse in {A}rabic-Language {X} Communities},
   author    = {Alqahtani, Amal and Salama, Rana and Diab, Mona},
-  booktitle = {Proceedings of the 11th Workshop on Social Media Mining for Health Applications and Health Real-World Data ({SMM4H-HeaRD} 2026)},
   year      = {2026},
   publisher = {Association for Computational Linguistics},
   url       = {https://github.com/amalqahtani/arabic-x-mental-health-discourse},
