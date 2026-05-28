@@ -7,8 +7,8 @@ Stage 1 : Per-tweet classification — LLM sees bio + tweet together in one call
            One label column per model, side by side.
 Stage 2 : User-level aggregation — deterministic Python logic, per model.
 
-Bio override rule: if ANY tweet for a user has BIO_PATIENT_SELF_IDENTIFICATION
-in its reason_tags, the user is immediately classified as possible_patient.
+Bio override rule: if ANY tweet for a user has BIO_SELF_IDENTIFICATION
+in its reason_tags, the user is immediately classified as likely_disclosure.
 
 Usage (rerun mode — re-parses existing LLM outputs, no new API calls):
     python classification_pipeline.py \
@@ -88,8 +88,8 @@ SYSTEM_PROMPT = """
 You are an expert classifier working with Arabic-language social media data collected from focused mental health communities on X (Twitter). These communities focus on ADHD, Bipolar Disorder, and BPD (Borderline Personality Disorder).
 
 Your task is to classify a single tweet as either:
-- "positive" — the tweet contains patient-level signals: the author appears to be personally living with or experiencing a mental health condition
-- "negative" — the tweet contains no patient-level signals: the content is educational, professional, neutral, or irrelevant
+- "positive" — the tweet contains personal-disclosure signals: the author appears to be personally living with or experiencing a mental health condition
+- "negative" — the tweet contains no personal-disclosure signals: the content is educational, professional, neutral, or irrelevant
 
 You are classifying the tweet only. User-level decisions are handled separately.
 
@@ -103,10 +103,10 @@ You are classifying the tweet only. User-level decisions are handled separately.
 Use BOTH the bio and the tweet together to make your decision.
 
 BIO OVERRIDE RULE:
-If the bio clearly identifies the user as a patient — explicit diagnosis, living-with language, or condition as personal identity (e.g., "تم تشخيصي بـ ADHD", "أعيش مع ثنائي القطب", "#BPD", "bipolar girl") — then:
+If the bio clearly identifies the user as living with a condition — explicit diagnosis, living-with language, or condition as personal identity (e.g., "تم تشخيصي بـ ADHD", "أعيش مع ثنائي القطب", "#BPD", "bipolar girl") — then:
   * Set tweet_label to "positive"
-  * Add BIO_PATIENT_SELF_IDENTIFICATION to reason_tags
-  * This applies even if the tweet itself contains no patient signal
+  * Add BIO_SELF_IDENTIFICATION to reason_tags
+  * This applies even if the tweet itself contains no disclosure signal
 
 If the bio indicates a professional or institutional account, this supports "negative" — but does NOT override a clearly personal tweet.
 If the bio is empty, rely on the tweet alone and add EDGE_EMPTY_BIO to reason_tags.
@@ -126,7 +126,7 @@ If the bio is empty, rely on the tweet alone and add EDGE_EMPTY_BIO to reason_ta
 - Written as a professional advising or answering someone else's question
 - Promoting a therapy session, app, webinar, course, book, or product
 - Discussing research findings, clinical definitions, or diagnostic criteria
-- Addressing patients as a separate audience (e.g., "هؤلاء الأشخاص يحتاجون...")
+- Addressing community members as a separate audience (e.g., "هؤلاء الأشخاص يحتاجون...")
 - Spam, off-topic, or completely irrelevant content
 
 DEFAULT RULE: When in doubt, label "negative".
@@ -141,23 +141,23 @@ Return ONLY a valid JSON object with no extra text, no markdown fences:
 
 ## REASON TAG TAXONOMY
 
-Patient signal tags (support "positive"):
+Disclosure signal tags (support "positive"):
 - TWEET_SYMPTOM_DISCLOSURE            : Tweet describes experiencing symptoms in first person
 - TWEET_PERSONAL_DIAGNOSIS_DISCLOSURE : Tweet explicitly states the user was diagnosed
 - TWEET_PEER_SUPPORT_SEEKING          : Tweet seeks support or validation from others with the condition
 - TWEET_EMOTIONAL_VENTING             : Tweet expresses raw personal emotion or distress without educational intent
 - TWEET_FIRST_PERSON_SYMPTOM_QUESTION : Tweet asks whether a personally experienced symptom belongs to a condition
 
-Non-patient signal tags (support "negative"):
+Non-disclosure signal tags (support "negative"):
 - TWEET_EDUCATIONAL_CONTENT           : Tweet explains symptoms, conditions, or treatment in informational third-person style
 - TWEET_PROFESSIONAL_ADVICE           : Tweet offers clinical guidance or answers someone else's question professionally
 - TWEET_SERVICE_PROMOTION             : Tweet promotes a therapy session, app, webinar, course, or mental health product
 - TWEET_RESEARCH_OR_CLINICAL          : Tweet discusses diagnostic criteria, research findings, or clinical definitions
-- TWEET_THIRD_PERSON_FRAMING          : Tweet addresses patients as a separate audience
+- TWEET_THIRD_PERSON_FRAMING          : Tweet addresses community members as a separate audience
 - TWEET_SPAM_OR_IRRELEVANT            : Tweet is off-topic, spam, or unrelated to mental health
 
 Bio signal tags (always added when detected, regardless of tweet label):
-- BIO_PATIENT_SELF_IDENTIFICATION     : Bio clearly identifies the user as personally living with or diagnosed with a condition
+- BIO_SELF_IDENTIFICATION     : Bio clearly identifies the user as personally living with or diagnosed with a condition
 
 Edge case tags:
 - EDGE_EMPTY_BIO                      : Bio is absent; classification relies entirely on tweet content
@@ -172,7 +172,7 @@ Edge case tags:
 ## EXAMPLES (fully synthetic)
 
 Input:  {"community": "BPD", "user_bio": "إنسانة تتعلم كيف تعيش مع اضطراب الشخصية الحدية يومًا بيوم 🖤 | #BPD", "tweet_text": "أصعب شي في الحدية إنك تحب بشكل كامل وفجأة تحس إن كل شي انهار بدون سبب واضح"}
-Output: {"tweet_label": "positive", "confidence": "high", "reason_tags": ["TWEET_EMOTIONAL_VENTING", "BIO_PATIENT_SELF_IDENTIFICATION"]}
+Output: {"tweet_label": "positive", "confidence": "high", "reason_tags": ["TWEET_EMOTIONAL_VENTING", "BIO_SELF_IDENTIFICATION"]}
 
 Input:  {"community": "ADHD", "user_bio": "أخصائي نفسي إكلينيكي | ماجستير إرشاد نفسي | مرخص من هيئة التخصصات الصحية", "tweet_text": "الفرق بين فرط الحركة عند الأطفال والبالغين: الأطفال يُظهرون أعراضًا حركية واضحة، بينما يعاني البالغون من أعراض داخلية كالقلق الذهني وصعوبة التنظيم."}
 Output: {"tweet_label": "negative", "confidence": "high", "reason_tags": ["TWEET_EDUCATIONAL_CONTENT", "TWEET_THIRD_PERSON_FRAMING"]}
@@ -184,15 +184,15 @@ Input:  {"community": "BPD", "user_bio": "معالج نفسي معتمد | مت�
 Output: {"tweet_label": "negative", "confidence": "medium", "reason_tags": ["TWEET_THIRD_PERSON_FRAMING", "EDGE_AMBIGUOUS_FIRST_PERSON"]}
 
 Input:  {"community": "ADHD", "user_bio": "مبرمج ومهتم بالتقنية | تم تشخيصي بـ ADHD منذ سنتين", "tweet_text": "الفرق بين فرط الحركة عند الأطفال والبالغين من وجهة نظر علمية"}
-Output: {"tweet_label": "positive", "confidence": "high", "reason_tags": ["TWEET_EDUCATIONAL_CONTENT", "BIO_PATIENT_SELF_IDENTIFICATION"]}
+Output: {"tweet_label": "positive", "confidence": "high", "reason_tags": ["TWEET_EDUCATIONAL_CONTENT", "BIO_SELF_IDENTIFICATION"]}
 
 Input:  {"community": "bipolar", "user_bio": "طالبة دكتوراه علم نفس 📚 | أعيش مع ثنائي القطب وأحاول أفهمه من الداخل والخارج", "tweet_text": "لما تكون في نوبة اكتئاب وتعرف نظريًا كل الأدوات العلاجية بس ما تقدر تطبق ولو واحدة — هذا تناقض ما يفهمه غير اللي عاشه"}
-Output: {"tweet_label": "positive", "confidence": "medium", "reason_tags": ["TWEET_EMOTIONAL_VENTING", "TWEET_SYMPTOM_DISCLOSURE", "BIO_PATIENT_SELF_IDENTIFICATION", "EDGE_PROFESSIONAL_BIO_PERSONAL_TWEET"]}
+Output: {"tweet_label": "positive", "confidence": "medium", "reason_tags": ["TWEET_EMOTIONAL_VENTING", "TWEET_SYMPTOM_DISCLOSURE", "BIO_SELF_IDENTIFICATION", "EDGE_PROFESSIONAL_BIO_PERSONAL_TWEET"]}
 
 ## IMPORTANT NOTES
 - This dataset is primarily in Arabic (Modern Standard and Gulf/Saudi dialect). Be sensitive to dialectal expressions of distress (e.g., "مو زين", "نفسيتي مدمرة", "قرفانة من كل شي").
 - Do NOT base the classification solely on the community tag — professionals, researchers, and caregivers are present in all three communities.
-- If the bio clearly identifies the user as a patient, always return tweet_label "positive" and add BIO_PATIENT_SELF_IDENTIFICATION — even if the tweet itself is educational or neutral.
+- If the bio clearly identifies the user as living with a condition, always return tweet_label "positive" and add BIO_SELF_IDENTIFICATION — even if the tweet itself is educational or neutral.
 - A professional bio does NOT override a clearly personal tweet — classify such cases as "positive" and add EDGE_PROFESSIONAL_BIO_PERSONAL_TWEET.
 - This classification is for research purposes. Handle all data with care and do not make clinical inferences beyond the binary label requested.
 """
@@ -255,7 +255,7 @@ VALID_REASON_TAGS = {
     "TWEET_RESEARCH_OR_CLINICAL",
     "TWEET_THIRD_PERSON_FRAMING",
     "TWEET_SPAM_OR_IRRELEVANT",
-    "BIO_PATIENT_SELF_IDENTIFICATION",
+    "BIO_SELF_IDENTIFICATION",
     "EDGE_EMPTY_BIO",
     "EDGE_AMBIGUOUS_FIRST_PERSON",
     "EDGE_PROFESSIONAL_BIO_PERSONAL_TWEET",
@@ -468,22 +468,22 @@ def save_results(tweets_df: pd.DataFrame, users_df: pd.DataFrame) -> None:
     print(f"  ✅ Saved user-level  → {users_xlsx}  |  {users_csv}")
 
 
-def save_patient_tweets(
+def save_disclosure_tweets(
     tweets_df:   pd.DataFrame,
     users_df:    pd.DataFrame,
     model_cols:  list,
     output_base: str,
 ) -> None:
     """
-    Filter tweets to those belonging to users classified as 'possible_patient'
+    Filter tweets to those belonging to users classified as 'likely_disclosure'
     and save several subset CSVs for downstream analysis.
 
     Subsets produced:
-      * consensus — users where ALL active models agree on possible_patient
-      * either    — users where AT LEAST ONE model says possible_patient
+      * consensus — users where ALL active models agree on likely_disclosure
+      * either    — users where AT LEAST ONE model says likely_disclosure
       * per-model — one file per model
     """
-    print("\n[pipeline] Filtering patient tweets...")
+    print("\n[pipeline] Filtering disclosure tweets...")
     tweets_df            = tweets_df.copy()
     tweets_df["user_id"] = tweets_df["user_id"].astype(str)
     users_df             = users_df.copy()
@@ -496,7 +496,7 @@ def save_patient_tweets(
             print(f"  ⚠️  {label}: 0 users matched — skipping.")
             return
         subset   = tweets_df[tweets_df["user_id"].isin(user_ids)].copy()
-        path     = f"{output_base}_patient_tweets_{suffix}.csv"
+        path     = f"{output_base}_disclosure_tweets_{suffix}.csv"
         subset.to_csv(path, index=False, encoding="utf-8-sig")
         n_users  = len(user_ids)
         n_tweets = len(subset)
@@ -506,7 +506,7 @@ def save_patient_tweets(
             f"→ {path}"
         )
 
-    # 1. Consensus — every model voted possible_patient
+    # 1. Consensus — every model voted likely_disclosure
     label_cols = [
         f"{c.replace('.', '_').replace('-', '_')}__user_label"
         for c in model_cols
@@ -516,14 +516,14 @@ def save_patient_tweets(
     if label_cols:
         consensus_mask = pd.Series(True, index=users_df.index)
         for col in label_cols:
-            consensus_mask &= (users_df[col] == "possible_patient")
+            consensus_mask &= (users_df[col] == "likely_disclosure")
         consensus_users = set(users_df.loc[consensus_mask, "user_id"])
         _save_subset(consensus_users, "consensus", "Consensus (all models)")
 
-        # 2. Either — at least one model voted possible_patient
+        # 2. Either — at least one model voted likely_disclosure
         either_mask = pd.Series(False, index=users_df.index)
         for col in label_cols:
-            either_mask |= (users_df[col] == "possible_patient")
+            either_mask |= (users_df[col] == "likely_disclosure")
         either_users = set(users_df.loc[either_mask, "user_id"])
         _save_subset(either_users, "either", "Either model")
 
@@ -534,7 +534,7 @@ def save_patient_tweets(
         if label_col not in users_df.columns:
             continue
         model_users = set(
-            users_df.loc[users_df[label_col] == "possible_patient", "user_id"]
+            users_df.loc[users_df[label_col] == "likely_disclosure", "user_id"]
         )
         _save_subset(model_users, slug, f"{col} only")
 
@@ -604,22 +604,22 @@ def aggregate_user_for_model(user_id: str, tweet_results: list) -> dict:
     Aggregate per-tweet labels for one model into a single user-level label.
 
     Rules applied in order (any positive evidence wins):
-      1. Any tweet has BIO_PATIENT_SELF_IDENTIFICATION in reason_tags
-             → possible_patient  (bio override)
+      1. Any tweet has BIO_SELF_IDENTIFICATION in reason_tags
+             → likely_disclosure  (bio override)
       2. Any tweet_label == "positive"
-             → possible_patient
+             → likely_disclosure
       3. All tweets negative and no bio signal
              → other
     """
     # Rule 1: bio override
     bio_override = any(
-        "BIO_PATIENT_SELF_IDENTIFICATION" in t.get("reason_tags", [])
+        "BIO_SELF_IDENTIFICATION" in t.get("reason_tags", [])
         for t in tweet_results
     )
     if bio_override:
         return {
-            "user_label":           "possible_patient",
-            "aggregation_reason":   "AGG_BIO_PATIENT_OVERRIDE",
+            "user_label":           "likely_disclosure",
+            "aggregation_reason":   "AGG_BIO_DISCLOSURE_OVERRIDE",
             "triggering_tweet_ids": [],
         }
 
@@ -634,7 +634,7 @@ def aggregate_user_for_model(user_id: str, tweet_results: list) -> dict:
             else "AGG_CONFLICT_POSITIVE_WINS"
         )
         return {
-            "user_label":           "possible_patient",
+            "user_label":           "likely_disclosure",
             "aggregation_reason":   reason,
             "triggering_tweet_ids": positive_ids,
         }
@@ -877,7 +877,7 @@ def compute_user_kappa(users_df: pd.DataFrame, model_cols: list):
         print("  (Cohen's kappa — 2 raters, user-level)")
     else:
         from statsmodels.stats.inter_rater import fleiss_kappa as fk
-        LABELS = ["possible_patient", "other"]
+        LABELS = ["likely_disclosure", "other"]
         M = valid.apply(
             lambda row: [row.tolist().count(lbl) for lbl in LABELS], axis=1
         ).tolist()
@@ -903,22 +903,22 @@ def user_agreement_summary(users_df: pd.DataFrame, model_cols: list) -> pd.DataF
     n_models  = len(label_cols)
     threshold = max(n_models - 1, (n_models // 2) + 1)
 
-    users_df["user_vote_patient"] = users_df[label_cols].apply(
-        lambda r: (r == "possible_patient").sum(), axis=1
+    users_df["user_vote_disclosure"] = users_df[label_cols].apply(
+        lambda r: (r == "likely_disclosure").sum(), axis=1
     )
     users_df["user_vote_other"] = users_df[label_cols].apply(
         lambda r: (r == "other").sum(), axis=1
     )
     users_df["user_majority_label"] = users_df[
-        ["user_vote_patient", "user_vote_other"]
+        ["user_vote_disclosure", "user_vote_other"]
     ].apply(
-        lambda r: "possible_patient"
-        if r["user_vote_patient"] > r["user_vote_other"]
+        lambda r: "likely_disclosure"
+        if r["user_vote_disclosure"] > r["user_vote_other"]
         else "other",
         axis=1,
     )
     users_df["user_strong_consensus"] = users_df[
-        ["user_vote_patient", "user_vote_other"]
+        ["user_vote_disclosure", "user_vote_other"]
     ].apply(lambda r: r.max() >= threshold, axis=1)
     users_df["user_needs_human_review"] = ~users_df["user_strong_consensus"]
     return users_df
@@ -938,9 +938,9 @@ def print_user_analysis(users_df: pd.DataFrame, model_cols: list):
         label_col = f"{slug}__user_label"
         if label_col in users_df.columns:
             counts = users_df[label_col].value_counts()
-            pat    = counts.get("possible_patient", 0) / len(users_df) * 100
+            pat    = counts.get("likely_disclosure", 0) / len(users_df) * 100
             oth    = counts.get("other",            0) / len(users_df) * 100
-            print(f"  {col:<35} possible_patient={pat:.1f}%  other={oth:.1f}%")
+            print(f"  {col:<35} likely_disclosure={pat:.1f}%  other={oth:.1f}%")
 
     print("\n── Aggregation Reason Breakdown ──")
     for col in model_cols:
@@ -979,16 +979,16 @@ def print_user_analysis(users_df: pd.DataFrame, model_cols: list):
             print(ct.to_string())
 
     if "community" in users_df.columns:
-        print("\n── possible_patient Rate per Community (user-level) ──")
+        print("\n── likely_disclosure Rate per Community (user-level) ──")
         for col in model_cols:
             slug      = col.replace(".", "_").replace("-", "_")
             label_col = f"{slug}__user_label"
             if label_col in users_df.columns:
                 rates = (
                     users_df.groupby("community")[label_col]
-                    .apply(lambda x: (x == "possible_patient").mean() * 100)
+                    .apply(lambda x: (x == "likely_disclosure").mean() * 100)
                     .round(1)
-                    .rename("possible_patient_%")
+                    .rename("likely_disclosure_%")
                 )
                 print(f"\n  {col}:")
                 print(rates.to_string())
@@ -1014,7 +1014,7 @@ def run_pipeline(mode: str = "rerun") -> None:
       4. Tweet-level agreement analysis
       5. User-level aggregation per model
       6. User-level agreement analysis
-      7. Save all results and patient-tweet subsets
+      7. Save all results and disclosure-tweet subsets
     """
     print(f"\n[pipeline] Starting ({mode} mode)...")
 
@@ -1058,7 +1058,7 @@ def run_pipeline(mode: str = "rerun") -> None:
     # ── Step 7: Save results ───────────────────────────────────────────────────
     save_results(df, users_df)
     output_base = os.path.splitext(OUTPUT_PATH)[0]
-    save_patient_tweets(df, users_df, annotated_cols, output_base)
+    save_disclosure_tweets(df, users_df, annotated_cols, output_base)
 
     print("\n[pipeline] Done.")
 
