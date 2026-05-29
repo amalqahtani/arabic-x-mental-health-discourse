@@ -18,7 +18,6 @@ The pipeline classifies Arabic tweets from condition-specific X Communities (ADH
 | `classification_pipeline.py` | LLM-assisted personal-disclosure classification pipeline |
 | `post_ids.csv` | Post IDs for all 9,582 preprocessed tweets |
 | `DATA.md` | Dataset description and re-hydration instructions |
-| `LICENSE` | MIT License |
 
 > **Note on data release:** Only post IDs are released, in accordance with the X Developer Agreement. Tweet content must be re-hydrated using the X API. User identifiers and text are not included.
 
