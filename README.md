@@ -122,12 +122,18 @@ This pipeline was developed for academic research on Arabic mental-health discou
 If you use this pipeline or the associated corpus, please cite:
 
 ```bibtex
-@inproceedings{alqahtani2026arabic,
-  title     = {Understanding the Sociocultural Dimensions of Mental Health Discourse in {A}rabic-Language {X} Communities},
-  author    = {Alqahtani, Amal and Salama, Rana and Diab, Mona},
-  year      = {2026},
-  publisher = {Association for Computational Linguistics},
-  url       = {https://github.com/amalqahtani/arabic-x-mental-health-discourse},
+@inproceedings{alqahtani-etal-2026-understanding,
+    title = "Understanding the Sociocultural Dimensions of Mental Health Discourse in {Arabic}-Language {X} Communities",
+    author = "Alqahtani, Amal  and
+      Salama, Rana  and
+      Diab, Mona",
+    booktitle = "Proceedings of the 11th Social Media Mining for Health Applications and Health Real-World Data ({SMM4H}-{HeaRD} 2026) Workshop and Shared Tasks",
+    month = jul,
+    year = "2026",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://github.com/amalqahtani/arabic-x-mental-health-discourse",
+    abstract = "Computational mental health research has predominantly centered on English-speaking populations, leaving Arabic-language discourse comparatively under-examined. We present an exploratory computational study of 8,147 tweets from 607 users classified by a GPT-4.1 personal-disclosure pipeline as likely lived-experience authors in three condition-specific Arabic-language X (formerly Twitter) Communities. We focus on discourse related to borderline personality disorder (BPD), bipolar disorder, and ADHD, and characterize community-associated linguistic patterns using a multi-domain cultural keyword framework. The results suggest that in this corpus, Bipolar tweets contain more religious and medical vocabulary, BPD tweets contain more relational, identity, and emotional-distress vocabulary, and ADHD tweets more often focus on practical symptoms and medication management. We treat these patterns as hypothesis-generating rather than confirmatory because the corpus is imbalanced across conditions, some subcorpora are temporally concentrated, and the keyword framework is an initial operationalization rather than a validated measurement instrument. The paper contributes a reusable LLM-assisted personal-disclosure pipeline and an exploratory cultural keyword framework for Arabic mental health discourse."
 }
 ```
 
