@@ -117,22 +117,27 @@ This pipeline was developed for academic research on Arabic mental-health discou
 
 ---
 
-## Citation [To Be Updated]
+## Citation 
 
 If you use this pipeline or the associated corpus, please cite:
 
 ```bibtex
 @inproceedings{alqahtani-etal-2026-understanding,
-    title = "Understanding the Sociocultural Dimensions of Mental Health Discourse in {Arabic}-Language {X} Communities",
-    author = "Alqahtani, Amal  and
-      Salama, Rana  and
-      Diab, Mona",
-    booktitle = "Proceedings of the 11th Social Media Mining for Health Applications and Health Real-World Data ({SMM4H}-{HeaRD} 2026) Workshop and Shared Tasks",
+    title = "Understanding the Sociocultural Dimensions of Mental Health Discourse in {A}rabic {X} Communities",
+    author = "Alqahtani, Amal Abdullah  and
+      Salama, Rana Aref  and
+      Diab, Mona T.",
+    editor = "Lopez-Garcia, Guillermo  and
+      Gonzalez-Hernandez, Graciela",
+    booktitle = "Proceedings of the 11th Social Media Mining for Health Research and Applications ({SMM}4{H}-{H}ea{RD} 2026) Workshop and Shared Tasks",
     month = jul,
     year = "2026",
-    address = "Online",
+    address = "San Diego, United States",
     publisher = "Association for Computational Linguistics",
-    url = "https://github.com/amalqahtani/arabic-x-mental-health-discourse",
+    url = "https://aclanthology.org/2026.smm4h-1.47/",
+    doi = "10.18653/v1/2026.smm4h-1.47",
+    pages = "286--304",
+    ISBN = "979-8-89176-432-3",
     abstract = "Computational mental health research has predominantly centered on English-speaking populations, leaving Arabic-language discourse comparatively under-examined. We present an exploratory computational study of 8,147 tweets from 607 users classified by a GPT-4.1 personal-disclosure pipeline as likely lived-experience authors in three condition-specific Arabic-language X (formerly Twitter) Communities. We focus on discourse related to borderline personality disorder (BPD), bipolar disorder, and ADHD, and characterize community-associated linguistic patterns using a multi-domain cultural keyword framework. The results suggest that in this corpus, Bipolar tweets contain more religious and medical vocabulary, BPD tweets contain more relational, identity, and emotional-distress vocabulary, and ADHD tweets more often focus on practical symptoms and medication management. We treat these patterns as hypothesis-generating rather than confirmatory because the corpus is imbalanced across conditions, some subcorpora are temporally concentrated, and the keyword framework is an initial operationalization rather than a validated measurement instrument. The paper contributes a reusable LLM-assisted personal-disclosure pipeline and an exploratory cultural keyword framework for Arabic mental health discourse."
 }
 ```
